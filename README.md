@@ -77,7 +77,8 @@ npm run build:mcp
 
 ### Configure
 
-Create a `.env` file or export environment variables:
+Copy `.env.example` to `.env` and fill in real values (the entry point loads `.env`
+automatically via `dotenv`), or export the variables in your shell:
 
 ```bash
 # Required

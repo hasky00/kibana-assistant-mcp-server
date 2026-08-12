@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { MCPServer } from '@mastra/mcp';
 import { allTools } from '../tools';
 import { allPrompts } from '../prompts';
