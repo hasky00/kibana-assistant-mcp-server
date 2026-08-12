@@ -96,7 +96,13 @@ export AUDIT_ENABLED="true"                             # Audit logging to stder
 export PII_REDACTION_ENABLED="true"                     # PII masking (default true)
 ```
 
-> **Note:** The Elasticsearch URL is derived automatically from the Kibana URL by replacing `.kb.` with `.es.` in the hostname. This convention matches Elastic Cloud deployments.
+> **Note:** On Elastic Cloud, the Elasticsearch URL is derived automatically from the Kibana URL by replacing `.kb.` with `.es.` in the hostname.
+>
+> **Self-hosted / custom domain:** If you run your own cluster (e.g. `bankstr.xyz` on your own infrastructure) where Kibana and Elasticsearch are on different hosts or ports, set `ELASTICSEARCH_URL` explicitly — the `.kb.`→`.es.` convention does not apply:
+> ```bash
+> export KIBANA_URL="https://kibana.bankstr.xyz"
+> export ELASTICSEARCH_URL="https://es.bankstr.xyz:9200"
+> ```
 
 ### Run
 
