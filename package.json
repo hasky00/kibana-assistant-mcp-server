@@ -6,6 +6,9 @@
   "bin": "dist/stdio.mjs",
   "scripts": {
     "build:mcp": "tsup src/mastra/stdio.ts --format esm,cjs --no-splitting --dts && echo '#!/usr/bin/env node' | cat - dist/stdio.mjs > temp && mv temp dist/stdio.mjs && chmod +x dist/stdio.mjs",
+    "build:http": "tsup src/mastra/http.ts --format esm,cjs --no-splitting --dts && echo '#!/usr/bin/env node' | cat - dist/http.mjs > temp && mv temp dist/http.mjs && chmod +x dist/http.mjs",
+    "build": "npm run build:mcp && npm run build:http",
+    "start:http": "node dist/http.mjs",
     "test": "vitest run"
   },
   "keywords": [],
