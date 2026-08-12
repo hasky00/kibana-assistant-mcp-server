@@ -1,0 +1,30 @@
+# Render.com blueprint for the Kibana Banking MCP remote endpoint.
+#
+# Deploy: push this repo to GitHub, then in the Render dashboard choose
+# "New +" -> "Blueprint" and point it at the repo. Render reads this file,
+# builds the Dockerfile, and prompts for the secret env vars below.
+#
+# Endpoint after deploy: https://<service>.onrender.com/mcp
+# Health probe:          https://<service>.onrender.com/healthz
+
+services:
+  - type: web
+    name: kibana-banking-mcp
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter          # 'starter' stays warm; 'free' sleeps and drops sessions
+    healthCheckPath: /healthz
+    autoDeploy: false
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      # Render injects PORT; the server honors it (defaults to 3000 otherwise).
+      # Secrets: set these in the dashboard (sync:false keeps them out of git).
+      - key: KIBANA_URL
+        sync: false
+      - key: ELASTICSEARCH_URL   # only for self-hosted / custom-domain clusters
+        sync: false
+      - key: KIBANA_API_KEY
+        sync: false
+      - key: MCP_AUTH_TOKEN
+        sync: false

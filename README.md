@@ -154,6 +154,10 @@ docker build -t kibana-banking-mcp .
 docker run -p 3000:3000 --env-file .env kibana-banking-mcp
 ```
 
+**Deploy to a public URL** (Fly.io / Render / any container host) so hosted agents can reach it —
+see **[docs/DEPLOY.md](docs/DEPLOY.md)**. Ready-made [`fly.toml`](fly.toml) and [`render.yaml`](render.yaml)
+are included; both keep secrets out of git and expose only the authenticated `/mcp` route.
+
 Run the container **inside your own infrastructure**, in the same network boundary as your
 Elasticsearch cluster — the `KIBANA_API_KEY` and PII redaction stay within your perimeter,
 and only the authenticated MCP endpoint is exposed to agents.
