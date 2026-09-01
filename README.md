@@ -96,6 +96,18 @@ export AUDIT_ENABLED="true"                             # Audit logging to stder
 export PII_REDACTION_ENABLED="true"                     # PII masking (default true)
 ```
 
+### Check the deployment
+
+Verify your cluster is reachable and your credentials work before wiring up any agent:
+
+```bash
+npm run doctor
+```
+
+It reads the same `.env` and reports authentication (username / roles / realm), cluster health,
+and the non-system indices the agent will be able to query. Exit code `0` = healthy, `1` = a
+problem it diagnoses (missing config, bad key, unreachable host). The API key is never printed.
+
 > **Note:** On Elastic Cloud, the Elasticsearch URL is derived automatically from the Kibana URL by replacing `.kb.` with `.es.` in the hostname.
 >
 > **Self-hosted / custom domain:** If you run your own cluster (e.g. `bankstr.xyz` on your own infrastructure) where Kibana and Elasticsearch are on different hosts or ports, set `ELASTICSEARCH_URL` explicitly — the `.kb.`→`.es.` convention does not apply:
