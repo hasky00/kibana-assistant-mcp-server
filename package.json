@@ -6,6 +6,11 @@
   "bin": "dist/stdio.mjs",
   "scripts": {
     "build:mcp": "tsup src/mastra/stdio.ts --format esm,cjs --no-splitting --dts && echo '#!/usr/bin/env node' | cat - dist/stdio.mjs > temp && mv temp dist/stdio.mjs && chmod +x dist/stdio.mjs",
+    "build:http": "tsup src/mastra/http.ts --format esm,cjs --no-splitting --dts && echo '#!/usr/bin/env node' | cat - dist/http.mjs > temp && mv temp dist/http.mjs && chmod +x dist/http.mjs",
+    "build": "npm run build:mcp && npm run build:http",
+    "build:doctor": "tsup src/scripts/doctor.ts --format esm --no-splitting",
+    "start:http": "node dist/http.mjs",
+    "doctor": "npm run build:doctor && node dist/doctor.mjs",
     "test": "vitest run"
   },
   "keywords": [],
@@ -16,6 +21,7 @@
     "@mastra/mcp": "^1.0.0",
     "axios": "^1.13.4",
     "dismatch": "^0.0.3",
+    "dotenv": "^17.2.3",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   },

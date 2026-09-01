@@ -9,7 +9,11 @@
 export interface ServerConfig {
   /** Base URL of the Kibana deployment (e.g., `https://xyz.kb.us-east-1.aws.found.io`). */
   kibanaUrl: string;
-  /** Elasticsearch URL, derived from {@link kibanaUrl} by replacing `.kb.` with `.es.`. */
+  /**
+   * Elasticsearch URL. Taken from `ELASTICSEARCH_URL` when set (self-hosted /
+   * custom-domain deployments); otherwise derived from {@link kibanaUrl} by
+   * replacing `.kb.` with `.es.` (the Elastic Cloud convention).
+   */
   elasticsearchUrl: string;
   /** Base64-encoded API key for authenticating with Kibana/Elasticsearch. */
   kibanaApiKey: string;
@@ -43,14 +47,19 @@ function requiredEnv(name: string): string {
 /**
  * Loads server configuration from environment variables.
  *
- * The Elasticsearch URL is derived from the Kibana URL by replacing `.kb.`
- * with `.es.` in the hostname — this matches the Elastic Cloud URL convention.
+ * The Elasticsearch URL is resolved in this order:
+ *   1. `ELASTICSEARCH_URL`, when set — required for self-managed/self-hosted
+ *      deployments (e.g. a custom domain) where Kibana and Elasticsearch live on
+ *      different hosts or ports and the Elastic Cloud `.kb.`/`.es.` convention does
+ *      not apply.
+ *   2. Otherwise derived from `KIBANA_URL` by replacing `.kb.` with `.es.`, which
+ *      matches Elastic Cloud (`*.found.io`) URLs.
  *
  * @throws {Error} If required variables (`KIBANA_URL`, `KIBANA_API_KEY`) are missing.
  */
 export function loadConfig(): ServerConfig {
   const kibanaUrl = requiredEnv('KIBANA_URL');
-  const elasticsearchUrl = kibanaUrl.replace(/\.kb\./, '.es.');
+  const elasticsearchUrl = process.env.ELASTICSEARCH_URL?.trim() || kibanaUrl.replace(/\.kb\./, '.es.');
 
   const maxSearchSizeRaw = parseInt(process.env.MAX_SEARCH_SIZE || '100', 10);
   const maxSearchSize = Math.min(Math.max(1, maxSearchSizeRaw), 500);

@@ -77,7 +77,8 @@ npm run build:mcp
 
 ### Configure
 
-Create a `.env` file or export environment variables:
+Copy `.env.example` to `.env` and fill in real values (the entry point loads `.env`
+automatically via `dotenv`), or export the variables in your shell:
 
 ```bash
 # Required
@@ -95,9 +96,98 @@ export AUDIT_ENABLED="true"                             # Audit logging to stder
 export PII_REDACTION_ENABLED="true"                     # PII masking (default true)
 ```
 
-> **Note:** The Elasticsearch URL is derived automatically from the Kibana URL by replacing `.kb.` with `.es.` in the hostname. This convention matches Elastic Cloud deployments.
+### Check the deployment
+
+Verify your cluster is reachable and your credentials work before wiring up any agent:
+
+```bash
+npm run doctor
+```
+
+It reads the same `.env` and reports authentication (username / roles / realm), cluster health,
+and the non-system indices the agent will be able to query. Exit code `0` = healthy, `1` = a
+problem it diagnoses (missing config, bad key, unreachable host). The API key is never printed.
+
+> **Note:** On Elastic Cloud, the Elasticsearch URL is derived automatically from the Kibana URL by replacing `.kb.` with `.es.` in the hostname.
+>
+> **Self-hosted / custom domain:** If you run your own cluster (e.g. `bankstr.xyz` on your own infrastructure) where Kibana and Elasticsearch are on different hosts or ports, set `ELASTICSEARCH_URL` explicitly — the `.kb.`→`.es.` convention does not apply:
+> ```bash
+> export KIBANA_URL="https://kibana.bankstr.xyz"
+> export ELASTICSEARCH_URL="https://es.bankstr.xyz:9200"
+> ```
 
 ### Run
+
+The server ships **two transports** from the same tool/prompt/resource set:
+
+```bash
+# 1. stdio — local process, for Claude Desktop / local agents
+npm run build:mcp
+node dist/stdio.mjs
+
+# 2. HTTP — remote endpoint, for networked agents (see below)
+npm run build:http
+MCP_AUTH_TOKEN="$(openssl rand -hex 32)" node dist/http.mjs
+```
+
+### Remote endpoint (HTTP transport)
+
+For agents that connect over the network instead of spawning a local process, run the
+HTTP transport. It exposes both the modern **streamable HTTP** transport (`/mcp`) and the
+legacy **SSE** transport (`/sse` + `/message`) for client compatibility, plus an
+unauthenticated liveness probe at `/healthz`.
+
+> **Authentication is mandatory.** The endpoint can reach a private Elasticsearch cluster,
+> so it **fails closed**: it will not start unless `MCP_AUTH_TOKEN` is set (or
+> `MCP_ALLOW_ANONYMOUS=true` is set explicitly for local development). Every `/mcp`, `/sse`,
+> and `/message` request must send `Authorization: Bearer <MCP_AUTH_TOKEN>`; the token is
+> compared in constant time.
+
+```bash
+export KIBANA_URL="https://kibana.bankstr.xyz"
+export ELASTICSEARCH_URL="https://es.bankstr.xyz:9200"
+export KIBANA_API_KEY="your-base64-api-key"
+export MCP_AUTH_TOKEN="$(openssl rand -hex 32)"   # give this to your agents
+npm run start:http                                 # listens on 0.0.0.0:3000
+```
+
+| Variable            | Default    | Purpose                                             |
+| ------------------- | ---------- | --------------------------------------------------- |
+| `MCP_AUTH_TOKEN`    | *(required)* | Bearer token agents must present                  |
+| `MCP_ALLOW_ANONYMOUS` | `false`  | Disable auth (local dev only)                       |
+| `HOST` / `PORT`     | `0.0.0.0` / `3000` | Bind address                              |
+| `MCP_HTTP_PATH`     | `/mcp`     | Streamable HTTP route                               |
+| `MCP_SSE_PATH` / `MCP_MESSAGE_PATH` | `/sse` / `/message` | Legacy SSE routes           |
+
+**Deploy with Docker** (runs the HTTP transport as a non-root user, with a health check):
+
+```bash
+docker build -t kibana-banking-mcp .
+docker run -p 3000:3000 --env-file .env kibana-banking-mcp
+```
+
+**Deploy to a public URL** (Fly.io / Render / any container host) so hosted agents can reach it —
+see **[docs/DEPLOY.md](docs/DEPLOY.md)**. Ready-made [`fly.toml`](fly.toml) and [`render.yaml`](render.yaml)
+are included; both keep secrets out of git and expose only the authenticated `/mcp` route.
+
+Run the container **inside your own infrastructure**, in the same network boundary as your
+Elasticsearch cluster — the `KIBANA_API_KEY` and PII redaction stay within your perimeter,
+and only the authenticated MCP endpoint is exposed to agents.
+
+**Point an agent at it** (streamable HTTP):
+
+```jsonc
+{
+  "mcpServers": {
+    "kibana": {
+      "url": "https://mcp.bankstr.xyz/mcp",
+      "headers": { "Authorization": "Bearer <MCP_AUTH_TOKEN>" }
+    }
+  }
+}
+```
+
+### Run (stdio, standalone)
 
 ```bash
 # Run as stdio MCP server (for local development / Claude Desktop)

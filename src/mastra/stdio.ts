@@ -1,15 +1,7 @@
-import { MCPServer } from '@mastra/mcp';
-import { allTools } from '../tools';
-import { allPrompts } from '../prompts';
-import { allResources } from '../resources';
+import 'dotenv/config';
+import { createServer } from './server';
 
-const server = new MCPServer({
-  name: 'kibana-banking-mcp-server',
-  version: '1.0.0',
-  tools: allTools,
-  prompts: allPrompts,
-  resources: allResources,
-});
+const server = createServer();
 
 server.startStdio().catch((error) => {
   process.stderr.write(`Error running MCP server: ${error}\n`);
